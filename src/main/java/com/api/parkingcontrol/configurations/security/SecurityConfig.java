@@ -8,20 +8,29 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(request -> {
-                    request.requestMatchers(HttpMethod.GET, "/parking-spot/**").permitAll();
-                    request.requestMatchers(HttpMethod.DELETE, "/parking-spot/**").permitAll();
-                    request.anyRequest().authenticated();
-                });
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeRequests(authorizeRequests ->
+                        authorizeRequests
+                                .requestMatchers(HttpMethod.GET, "/parking-spot/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/parking-spot").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/parking-spot/**").hasRole("ADMIN")
+                                .anyRequest().authenticated()
+                )
+                .httpBasic(withDefaults())
+                .csrf(csrf -> csrf.disable());
         return http.build();
     }
-    public BCryptPasswordEncoder passwordEncoder(){
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }
